@@ -15,9 +15,11 @@ openai.api_key = os.getenv('OPENAI_API_KEY')
 def home():
     return render_template('home/index.html')
 
-@app.route('/get_token_data/<token_addresses>', methods=['GET'])
-def get_token_data(network, token_addresses):
-    url = f'https://api.geckoterminal.com/api/v2/networks/{network}/tokens/multi/{token_addresses}'
+@app.route('/get_token_data', methods=['GET'])
+def get_token_data():
+    network = request.form['network']
+    token_address = request.form['tokens']
+    url = f'https://api.geckoterminal.com/api/v2/networks/{network}/tokens/multi/{token_address}'
     response = requests.get(url, headers={'accept': 'application/json'})
     print(f"Gecko API Response Code: {response.status_code}")  
     if response.status_code == 200:
