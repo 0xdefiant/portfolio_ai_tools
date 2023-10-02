@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trading Suggestor</title>
+    <style>
+        .loader {
+            border: 10px solid #f3f3f3; /* Light grey */
+            border-top: 10px solid #3498db; /* Blue */
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 2s linear infinite;
+            display: none; /* By default, the loader is hidden */
+        }
+    
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>    
+</head>
+<body>
+    <h2>Stewad Trading AI</h2>
+    <p>What tokens are in your Portfolio?</p>
+    <select id="network">
+        <option value="eth">ETH</option>
+        <option value="polygon_pos">POLY</option>
+        <option value="optimism">OPT</option>
+        <option value="arbitrum">ARB</option>
+    </select>
+    <select id="token_addresses">
+        <!-- Your list of tokens goes here -->
+        <option value="0xbc7f459eE26D2F83d20Da97FCF0Eb5467B3E28a7">BTC</option>
+        <option value="0x73bFE136fEba2c73F441605752b2B8CAAB6843Ec">Ethereum</option>
+        <option value="0x1f9840a85d5aF5bf1D1762F925BDADdC4201F984">Uniswap</option>
+        <!-- ... -->
+    </select>
+    <br>
+    <button onclick="getSuggestion()">Get Recipe Suggestion</button>
+    
+    <div id="loader" class="loader"></div>
+    <h3>Suggestion:</h3>
+    <p id="suggestion"></p>
+
+    <script>
+        async function getSuggestion() {
+            // Show the loader
+            document.getElementById("loader").style.display = "block";
+
+            const holdings = document.getElementById("holdings").value.split(",");
+            const response = await fetch('/get-trade', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ holdings: holdings }),
+            });
+            const data = await response.json();
+
+            const network = document.getElementById("network").value;
+            const tokens = document.getElementById("token_addresses").value;
+            const geckoData = await fetch('/get_token_data', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: `network=${network}&tokens=${tokens}`
+            });
+            const tokenData = await geckoData.json();
+
+            const aiData = await fetch('/get-trade', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ holdings: [tokens] })
+            });
+            const aiResponse = await aiData.json();
+
+            // Hide the loader
+            document.getElementById("loader").style.display = "none";
+
+            document.getElementById("suggestion").innerText = data.suggestion;
+        }
+
+    </script>
+</body>
+</html>
