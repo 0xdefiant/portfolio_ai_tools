@@ -19,7 +19,7 @@ def home():
 def get_token_data():
     network = request.form['network']
     token_address = request.form['tokens']
-    url = f'https://api.geckoterminal.com/api/v2/networks/{network}/tokens/multi/{token_address}'
+    url = f'https://api.geckoterminal.com/api/v2/networks/{network}/tokens/{token_address}?include=include'
     response = requests.get(url, headers={'accept': 'application/json'})
     print(f"Gecko API Response Code: {response.status_code}")  
     if response.status_code == 200:
