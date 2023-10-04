@@ -1,29 +1,12 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Trading Suggestor</title>
-    <style>
-        .loader {
-            border: 10px solid #f3f3f3; /* Light grey */
-            border-top: 10px solid rgb(5, 65, 100); /* Blue */
-            border-radius: 50%;
-            width: 50px;
-            height: 50px;
-            animation: spin 2s linear infinite;
-            display: none; /* By default, the loader is hidden */
-        }
-    
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-    </style>    
-</head>
-<body>
-    <h2>Stewad Trading AI</h2>
-    <p>What tokens are in your Portfolio?</p>
+{% extends "base.html" %}
+
+{% block title %}
+    Stewad Token AI
+{% endblock %}
+
+{% block content %}
+    <h2>Stewad Token AI</h2>
+    <p>What tokens do you want to hear about?</p>
     <select id="network">
         <option value="eth">ETH</option>
         <option value="polygon_pos">POLY</option>
@@ -38,44 +21,10 @@
         <!-- ... -->
     </select>
     <br>
-    <button onclick="getSuggestion()">Get Portfolio Suggestion</button>
+    <button onclick="getSuggestion()">Get Token Suggestion</button>
     
     <div id="loader" class="loader"></div>
     <h3>Suggestion:</h3>
     <p id="suggestion"></p>
+{% endblock %}
 
-    <script>
-        async function getSuggestion() {
-            try {
-                document.getElementById("loader").style.display = "block";
-    
-                const network = document.getElementById("network").value;
-                const tokensList = Array.from(document.getElementById("tokens").selectedOptions).map(option => option.value);
-                const tokens = tokensList.join(',');
-    
-                // Fetch the AI portfolio suggestion directly
-                const response = await fetch('/get-portfolio-suggestion', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ network: network, tokens: tokens })
-                });
-    
-                const data = await response.json();
-    
-                // Hide the loader
-                document.getElementById("loader").style.display = "none";
-    
-                // Display the suggestion from the AI
-                document.getElementById("suggestion").innerText = data.portfolio;
-    
-            } catch (error) {
-                console.error("Error occurred:", error);
-                document.getElementById("suggestion").innerText = "An error occurred. Please check the console for details.";
-    
-                // Also hide the loader in case of error
-                document.getElementById("loader").style.display = "none";
-            }
-        }
-    </script>       
-</body>
-</html>

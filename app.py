@@ -17,8 +17,8 @@ openai.api_key = os.getenv('OPENAI_API_KEY')
 def home():
     return render_template('home/index.html')
 
-@app.route('/get-portfolio-suggestion', methods=['POST'])
-def get_portfolio_suggestion():
+@app.route('/get-token-suggestion', methods=['POST'])
+def get_token_suggestion():
     data = request.json
     network = data['network']
     tokens = data['tokens']
@@ -42,11 +42,11 @@ def get_portfolio_suggestion():
     # Create the message for the OpenAI model
     message = {
         "role": "system",
-        "content": "You are a crypto portfolio allocation specialist, that builds portfolio models from information that you are given."
+        "content": "You are a cryptocurrency expert who provides insightful analyses and opinions on various crypto tokens."
     }
     user_message = {
         "role": "user",
-        "content": f"I'm considering {token_name} ({token_symbol}). It's currently priced at ${token_price_usd} with a 24h trading volume of ${token_volume_24h}, and supply of {total_supply}. Given this, how should I structure my portfolio?"
+        "content": f"I am contemplating the purchase of {token_name} ({token_symbol}). Its current price stands at ${token_price_usd}, with a 24-hour trading volume of ${token_volume_24h}, and a total supply of {total_supply}. Considering these factors and any other market dynamics you might infer, would you recommend incorporating this token into my portfolio?"
     }
 
     openai_response = openai.ChatCompletion.create(
