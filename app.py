@@ -17,6 +17,7 @@ openai.api_key = os.getenv('OPENAI_API_KEY')
 def home():
     return render_template('home/index.html')
 
+
 @app.route('/get-token-suggestion', methods=['POST'])
 def get_token_suggestion():
     data = request.json
