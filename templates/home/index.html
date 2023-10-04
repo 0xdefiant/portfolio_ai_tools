@@ -7,13 +7,13 @@
 {% block content %}
     <h2>Steward AI</h2>
     <p>What tokens do you want to hear about?</p>
-    <select id="network">
+    <select id="network" class="form-select mb-3">
         <option value="eth">ETH</option>
         <option value="polygon_pos">POLY</option>
         <option value="optimism">OPT</option>
         <option value="arbitrum">ARB</option>
     </select>
-    <select id="tokens" multiple> <!-- this should be a list where you can select more than one. -->
+    <select id="tokens" class="form-select mb-3"> <!-- this should be a list where you can select more than one. -->
         <!-- Your list of tokens goes here -->
         <option value="0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599">BTC</option>
         <option value="0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2">Ethereum</option>
@@ -21,9 +21,9 @@
         <!-- ... -->
     </select>
     <br>
-    <button onclick="getSuggestion()">Get Token Suggestion</button>
+    <button onclick="getSuggestion()" class="btn btn-primary mb-3">Get Token Suggestion</button>
     
-    <div id="loader" class="loader"></div>
+    <div id="loader" class="loader mb-3"></div>
     <h3>Suggestion:</h3>
     <p id="suggestion"></p>
 {% endblock %}
