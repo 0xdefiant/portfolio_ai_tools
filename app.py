@@ -4,6 +4,7 @@ from flask import Flask, request, jsonify, render_template
 from dotenv import load_dotenv
 from flask_cors import CORS
 from datetime import datetime
+from fpdf import FPDF
 
 load_dotenv()  # Load environment variables from .env file
 
@@ -23,13 +24,35 @@ def home():
 @app.route('/get-portfolio-opinion', methods=['POST'])
 
 @app.route('/get-portfolio-explanation', methods=['POST'])
+class PDF(FPDF):
+    def header(self):
+        # You can set a custom header here if needed
+        pass
+
+    def footer(self):
+        # Page number at the bottom
+        self.set_y(-15)
+        self.set_font('Arial', 'I', 8)
+        self.cell(0, 10, 'Page ' + str(self.page_no()), 0, 0, 'C')
 # Run the token suggestion
+def get_portflolio_explanation():
+    # ByAllAccounts pdf generator
+    
+    def string_to_pdf(text, output_filename="output.pdf"):
+        pdf = PDF()
+        pdf.add_page()
+        pdf.set_font("Arial", size=12)
+        pdf.multi_cell(0, 10, text)
+        pdf.output(output_filename)
+
+
 @app.route('/get-portfolio-generation', methods=['POST'])
-def get_token_suggestion():
+def get_portfolio_suggestion():
     data = request.json
     age = data['age']
     income = data['income']
     risk_score = data['risk_score']
+    # some stocks or funds to choose from?
     # find an inudustry standard way of understanding risk. 
 
     # OpenAI interaction
