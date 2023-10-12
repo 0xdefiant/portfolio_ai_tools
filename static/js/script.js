@@ -10,7 +10,7 @@ async function getSuggestion() {
         const response = await fetch('/get-token-suggestion', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ network: network, tokens: tokens })
+            body: JSON.stringify({ network: network }) // Ensure you have the right body parameters here.
         });
 
         const data = await response.json();
@@ -29,3 +29,9 @@ async function getSuggestion() {
         document.getElementById("loader").style.display = "none";
     }
 }
+
+document.getElementById("tokenSuggestionForm").addEventListener("submit", function(event) {
+    event.preventDefault();
+    
+    getSuggestion(); // Call the async function to get the suggestion and handle the loader.
+});
