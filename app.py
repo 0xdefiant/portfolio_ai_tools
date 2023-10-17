@@ -12,6 +12,9 @@ from fpdf import FPDF
 from utils import LoginForm, RegistrationForm
 
 app = Flask(__name__)
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///site.db'  # Use SQLite for simplicity
+db = SQLAlchemy(app)
+bcrypt = Bcrypt(app)
 CORS(app)
 app.secret_key = 'mysecretkey'
 
@@ -20,10 +23,6 @@ openai.api_key = os.getenv('OPENAI_API_KEY')
 api_key = "MORALIS_API_KEY"
 current_date_string = str(datetime.now().isoformat())
 load_dotenv()  # Load environment variables from .env file
-
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///site.db'  # Use SQLite for simplicity
-db = SQLAlchemy(app)
-bcrypt = Bcrypt(app)
 
 login_manager = LoginManager()
 login_manager.init_app(app)
@@ -40,9 +39,6 @@ class User(UserMixin, db.Model):
         self.email = email
         self.password = bcrypt.generate_password_hash(password).decode('utf-8')
 
-    def check_password(self, password):
-        return bcrypt.check_password_hash(self.password, password)
-
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -57,40 +53,34 @@ def index():
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     form = LoginForm()
-    users = User.query.all()
+    if form.validate_on_submit():  # Validation only once per submission
+        print("Form submitted and validated.")
+        user = User.query.filter_by(email=form.email.data).first()
 
-    for user in users:
-        print(f"Email: {user.email}, Password: {user.password}")
+        if user:
+            print(f"Fetched user: {user.email}, {user.password}")
 
-    # Inside login route
-        if form.validate_on_submit():
-            print("Form submitted and validated.")
-            user = User.query.filter_by(email=form.email.data).first()
+            # Additional debugging: Print out details
+            print(f"Stored Hash: {user.password}")
+            print(f"Submitted password: {form.password.data}")
 
-            if user:
-                print(f"Fetched user: {user.email}, {user.password}")
-                
-                # Additional debugging: Print out details
-                print(f"Stored Hash: {user.password}")
-                print(f"Submitted password: {form.password.data}")
-
-                # Debugging: Generate hash for the submitted password
-                generated_hash = bcrypt.generate_password_hash(form.password.data).decode('utf-8')
-                print(f"Generated Hash: {generated_hash}")
-                
-                # Check the password
-                if bcrypt.check_password_hash(user.password, form.password.data):
-                    print("Password matched.")
-                    login_user(user)
-                    return redirect(url_for('index'))
-                else:
-                    print("Password did not match.")
+            # Check the password
+            if bcrypt.check_password_hash(user.password, form.password.data):
+                print("Password matched.")
+                login_user(user)
+                return redirect(url_for('index'))
             else:
-                print("User not found.")
+                print("Password did not match.")
+                print(f"User password: {user.password}")
+                print(f"Form password data: {form.password.data}")
+                print(f"Form password: {check_password_hash(user.password, form.password.data)}")
+                flash('Login Unsuccessful. Please check username and password', 'danger')
+        else:
+            print("User not found.")
+            flash('Login Unsuccessful. Please check username and password', 'danger')
 
-
-        flash('Login Unsuccessful. Please check username and password', 'danger')
     return render_template('home/login.html', title='Login', form=form)
+
 
 
 
@@ -118,14 +108,13 @@ def register():
             # Flash a message to tell the user that email already exists
             flash('Email already exists. Please login or use a different email.', 'danger')
         else:
-            hashed_password = bcrypt.generate_password_hash(form.password.data).decode('utf-8')
-            user = User(username=form.username.data, email=form.email.data, password=hashed_password)
+            # hashed_password = bcrypt.generate_password_hash(form.password.data)
+            user = User(username=form.username.data, email=form.email.data, password=form.password.data)
             db.session.add(user)
             db.session.commit()
             login_user(user)
             return redirect(url_for('protected'))
     return render_template('home/register.html', title='Register', form=form)
-
 
 
 @app.route('/get-portfolio-explanation', methods=['POST'])
