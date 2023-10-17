@@ -1,7 +1,7 @@
 import os
 import openai
 from flask import Flask, request, jsonify, redirect, render_template, url_for, flash
-from flask_login import LoginManager, login_user, login_required, logout_user
+from flask_login import LoginManager, login_user, login_required, logout_user, current_user
 from dotenv import load_dotenv
 from flask_cors import CORS
 from datetime import datetime
@@ -44,11 +44,12 @@ class User(UserMixin, db.Model):
 def load_user(user_id):
     return User.query.get(int(user_id))
 
-
 @app.route('/')
-@login_required
 def index():
-    return render_template('home/index.html')
+    if current_user.is_authenticated:
+        return render_template('home/index.html')
+    else:
+        return redirect(url_for('login'))
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -82,7 +83,13 @@ def login():
     return render_template('home/login.html', title='Login', form=form)
 
 
-
+@app.route('/show_users', methods=['GET'])
+def show_users():
+    users = User.query.all()
+    user_data = []
+    for user in users:
+        user_data.append({'username': user.username, 'email': user.email})
+    return jsonify(user_data)
 
 @app.route('/protected')
 @login_required
