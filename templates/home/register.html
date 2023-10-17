@@ -1,12 +1,10 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Register</title>
-</head>
-<body>
+{% extends "base.html" %}
 
-    <h1>Register</h1>
+{% block title %}
+    Steward Token AI
+{% endblock %}
 
+{% block content %}
     <form method="post">
         {{ form.hidden_tag() }}
         {% with messages = get_flashed_messages() %}
@@ -41,8 +39,8 @@
 
         <div>
             {{ form.submit() }}
+            <a href="{{ url_for('login') }}">Already have an account? Login here</a>
         </div>
     </form>
 
-</body>
-</html>
+{% endblock %}

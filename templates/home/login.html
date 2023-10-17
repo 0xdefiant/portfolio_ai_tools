@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+
+{% block title %}
+    Steward Token AI
+{% endblock %}
+
+{% block content %}
+<form method="post">
+    {{ form.hidden_tag() }}
+    {{ form.email.label }} {{ form.email() }}<br>
+    {{ form.password.label }} {{ form.password() }}<br>
+    {{ form.submit() }}
+    {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            <ul class=flashes>
+            {% for message in messages %}
+            <li>{{ message }}</li>
+            {% endfor %}
+            </ul>
+        {% endif %}
+    {% endwith %}
+    <a href="{{ url_for('register') }}">Don't have an account? Register here</a>
+</form>
+{% endblock %}

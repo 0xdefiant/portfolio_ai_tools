@@ -1,17 +1,15 @@
 import os
 import openai
 from flask import Flask, request, jsonify, redirect, render_template, url_for, flash
-from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user
+from flask_login import LoginManager, login_user, login_required, logout_user
 from dotenv import load_dotenv
 from flask_cors import CORS
 from datetime import datetime
-from fpdf import FPDF
 from flask_sqlalchemy import SQLAlchemy
-from flask_bcrypt import Bcrypt
-from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, SubmitField
-from wtforms.validators import DataRequired, Length, Email, EqualTo
-from werkzeug.security import generate_password_hash, check_password_hash
+from flask_bcrypt import Bcrypt, check_password_hash, generate_password_hash
+from flask_login import UserMixin
+from fpdf import FPDF
+from utils import LoginForm, RegistrationForm
 
 app = Flask(__name__)
 CORS(app)
@@ -23,16 +21,14 @@ api_key = "MORALIS_API_KEY"
 current_date_string = str(datetime.now().isoformat())
 load_dotenv()  # Load environment variables from .env file
 
-
-# Initialize SQLAlchemy and Bcrypt
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///site.db'  # Use SQLite for simplicity
 db = SQLAlchemy(app)
 bcrypt = Bcrypt(app)
 
 login_manager = LoginManager()
 login_manager.init_app(app)
+login_manager.login_view = 'login'
 
-# User model
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(20), unique=True, nullable=False)
@@ -42,33 +38,61 @@ class User(UserMixin, db.Model):
     def __init__(self, username, email, password):
         self.username = username
         self.email = email
-        self.password = generate_password_hash(password)
+        self.password = bcrypt.generate_password_hash(password).decode('utf-8')
 
     def check_password(self, password):
-        return check_password_hash(self.password, password)
+        return bcrypt.check_password_hash(self.password, password)
 
-# Registration form
-class RegistrationForm(FlaskForm):
-    username = StringField('Username', validators=[DataRequired(), Length(min=2, max=20)])
-    email = StringField('Email', validators=[DataRequired(), Email()])
-    password = PasswordField('Password', validators=[DataRequired()])
-    confirm_password = PasswordField('Confirm Password', validators=[DataRequired(), EqualTo('password')])
-    submit = SubmitField('Sign Up')
 
 @login_manager.user_loader
 def load_user(user_id):
-    return User(user_id)
+    return User.query.get(int(user_id))
 
 
 @app.route('/')
+@login_required
 def index():
     return render_template('home/index.html')
 
-@app.route('/login')
+@app.route('/login', methods=['GET', 'POST'])
 def login():
-    user = User(1)
-    login_user(user)
-    return redirect(url_for('protected'))
+    form = LoginForm()
+    users = User.query.all()
+
+    for user in users:
+        print(f"Email: {user.email}, Password: {user.password}")
+
+    # Inside login route
+        if form.validate_on_submit():
+            print("Form submitted and validated.")
+            user = User.query.filter_by(email=form.email.data).first()
+
+            if user:
+                print(f"Fetched user: {user.email}, {user.password}")
+                
+                # Additional debugging: Print out details
+                print(f"Stored Hash: {user.password}")
+                print(f"Submitted password: {form.password.data}")
+
+                # Debugging: Generate hash for the submitted password
+                generated_hash = bcrypt.generate_password_hash(form.password.data).decode('utf-8')
+                print(f"Generated Hash: {generated_hash}")
+                
+                # Check the password
+                if bcrypt.check_password_hash(user.password, form.password.data):
+                    print("Password matched.")
+                    login_user(user)
+                    return redirect(url_for('index'))
+                else:
+                    print("Password did not match.")
+            else:
+                print("User not found.")
+
+
+        flash('Login Unsuccessful. Please check username and password', 'danger')
+    return render_template('home/login.html', title='Login', form=form)
+
+
 
 @app.route('/protected')
 @login_required
