@@ -97,7 +97,7 @@ a:hover {
     display: none; /* Initially hidden */
     border: 8px solid #f3f3f3;
     border-radius: 50%;
-    border-top: 8px solid #007BFF;
+    border-top: 8px solid #3f3f3f;
     width: 40px;
     height: 40px;
     animation: spin 1s linear infinite;
@@ -107,4 +107,3 @@ a:hover {
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
 }
-
