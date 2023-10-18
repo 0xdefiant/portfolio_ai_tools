@@ -5,35 +5,30 @@
 {% endblock %}
 
 {% block content %}
-    <h2>Steward AI</h2>
-    <p>What tokens do you want to hear about?</p>
     <form id="tokenSuggestionForm">
+        <h2>Steward AI</h2>
+        <p>What tokens do you want to hear about?</p>
         <label>
             Age: 
             <input type="number" name="age" required>
-        </label><br><br>
-        
+        </label>
         <label>
             Income: 
             <input type="number" name="income" required>
-        </label><br><br>
-        
+        </label>
         <label>
             Risk Score (1-10): 
             <input type="number" name="risk_score" min="1" max="10" required>
-        </label><br><br>
-        
+        </label>
         <label>
             Chain: 
             <input type="text" name="chain" value="eth" required>
-        </label><br><br>
-
-        <input class="btn btn-primary mb-3" type="submit" value="Get Token Suggestion">
+        </label>
+        <input class="btn custom-btn" type="submit" value="Get Token Suggestion">
+        <div id="loader" class="loader mb-3"></div>
     </form>
-    <br>
-    
-    <div id="loader" class="loader mb-3"></div>
-    <h3>Suggestion:</h3>
-    <p id="suggestion"></p>
 {% endblock %}
 
+{% block footer %}
+    <a href="{{ url_for('logout') }}" class="btn btn-danger">Logout</a>
+{% endblock %}

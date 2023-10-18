@@ -1,14 +1,110 @@
+body {
+    font-family: Arial, sans-serif;
+    background-color: #E6E6E6;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+form {
+    background-color: #FFFFFF;
+    border-radius: 10px;
+    padding: 20px 40px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    max-width: 400px;
+    width: 100%;
+}
+
+h2, h3, p {
+    margin: 0;
+    padding: 0;
+}
+h2 {
+    margin-bottom: 20px;
+}
+label {
+    display: block;
+    margin-bottom: 15px;
+    font-size: 14px;
+}
+input[type="number"], input[type="text"] {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #B5B5B5;
+    border-radius: 5px;
+    font-size: 14px;
+    box-sizing: border-box;
+}
+
+form input[type="submit"] {
+    font-weight: bold;
+    color: #fff;
+    background-color: #333;
+    border: none;
+    border-radius: 30px;
+    padding: 15px 30px;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 10px 15px rgba(0, 0, 0, 0.2);
+    transition: transform 0.3s ease;
+}
+
+form input[type="submit"]::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-25%);
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(45deg, rgba(255,0,150,0.7), rgba(0, 204, 255, 0.7));
+    z-index: -1;
+    border-radius: 30px;
+}
+
+form input[type="submit"]:hover {
+    transform: scale(1.05);
+    color: #fff;
+    box-shadow: 0 15px 20px rgba(83, 83, 83, 0.3);}
+
+a {
+    display: block;
+    margin-top: 20px;
+    text-align: center;
+    color: #3A7BD5;
+    text-decoration: none;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+.flashes {
+    margin-top: 20px;
+    list-style-type: none;
+    padding: 0;
+}
+
+.flashes li {
+    background-color: #ffdbdb;
+    padding: 5px 10px;
+    border-radius: 5px;
+    margin-top: 10px;
+    color: #d9534f;
+}
+
 .loader {
-    border: 10px solid #f3f3f3; /* Light grey */
-    border-top: 10px solid rgb(5, 65, 100); /* Blue */
+    display: none; /* Initially hidden */
+    border: 8px solid #f3f3f3;
     border-radius: 50%;
-    width: 50px;
-    height: 50px;
-    animation: spin 2s linear infinite;
-    display: none; /* By default, the loader is hidden */
+    border-top: 8px solid #007BFF;
+    width: 40px;
+    height: 40px;
+    animation: spin 1s linear infinite;
 }
 
 @keyframes spin {
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
 }
+

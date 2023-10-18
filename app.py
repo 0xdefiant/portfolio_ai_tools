@@ -4,7 +4,7 @@ from flask import Flask, request, jsonify, redirect, render_template, url_for, f
 from flask_login import LoginManager, login_user, login_required, logout_user, current_user
 from dotenv import load_dotenv
 from flask_cors import CORS
-from datetime import datetime
+from datetime import datetime, timedelta
 from flask_sqlalchemy import SQLAlchemy
 from flask_bcrypt import Bcrypt, check_password_hash, generate_password_hash
 from flask_login import UserMixin
@@ -12,6 +12,7 @@ from fpdf import FPDF
 from utils import LoginForm, RegistrationForm
 
 app = Flask(__name__)
+app.config['REMEMBER_COOKIE_DURATION'] = timedelta(days=3)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///site.db'  # Use SQLite for simplicity
 db = SQLAlchemy(app)
 bcrypt = Bcrypt(app)
@@ -44,6 +45,7 @@ class User(UserMixin, db.Model):
 def load_user(user_id):
     return User.query.get(int(user_id))
 
+
 @app.route('/')
 def index():
     if current_user.is_authenticated:
@@ -68,7 +70,7 @@ def login():
             # Check the password
             if bcrypt.check_password_hash(user.password, form.password.data):
                 print("Password matched.")
-                login_user(user)
+                login_user(user, remember=form.remember_me.data)
                 return redirect(url_for('index'))
             else:
                 print("Password did not match.")
@@ -94,17 +96,14 @@ def show_users():
 @app.route('/protected')
 @login_required
 def protected():
-    return 'Logged in using Steward'
+    return redirect(url_for('index'))
 
 @app.route('/logout')
 @login_required
 def logout():
     logout_user()
-    return 'Logged out.'
+    return redirect(url_for('login'))
 
-@app.route('/home')
-def home():
-    return render_template('home/home.html')
 
 @app.route("/register", methods=['GET', 'POST'])
 def register():
@@ -119,7 +118,7 @@ def register():
             user = User(username=form.username.data, email=form.email.data, password=form.password.data)
             db.session.add(user)
             db.session.commit()
-            login_user(user)
+            login_user(user, remember=True)
             return redirect(url_for('protected'))
     return render_template('home/register.html', title='Register', form=form)
 

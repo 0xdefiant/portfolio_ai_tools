@@ -9,6 +9,7 @@
     {{ form.hidden_tag() }}
     {{ form.email.label }} {{ form.email() }}<br>
     {{ form.password.label }} {{ form.password() }}<br>
+    {{ form.remember_me.label }} {{ form.remember_me() }}<br>
     {{ form.submit() }}
     {% with messages = get_flashed_messages() %}
         {% if messages %}
