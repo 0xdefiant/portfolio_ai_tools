@@ -1,191 +1,193 @@
 import os
 import openai
-from flask import Flask, request, jsonify, redirect, render_template, url_for, flash
-from flask_login import LoginManager, login_user, login_required, logout_user, current_user
+import json
+import requests
+import pprint
+from flask import Flask, request, jsonify
 from dotenv import load_dotenv
 from flask_cors import CORS
-from datetime import datetime, timedelta
-from flask_sqlalchemy import SQLAlchemy
-from flask_bcrypt import Bcrypt, check_password_hash, generate_password_hash
-from flask_login import UserMixin
-from fpdf import FPDF
-from utils import LoginForm, RegistrationForm
+from datetime import datetime
+from utils.functions.utils import token_list, dates_list, extract_json, extract_reason, organize_data, get_stock_data, get_mutual_fund_data, create_pdf
+
+load_dotenv() # Load Environment variables from .env file
 
 app = Flask(__name__)
-app.config['REMEMBER_COOKIE_DURATION'] = timedelta(days=3)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///site.db'  # Use SQLite for simplicity
-db = SQLAlchemy(app)
-bcrypt = Bcrypt(app)
 CORS(app)
-app.secret_key = 'mysecretkey'
 
-# Retrieve the API key from environment variables
 openai.api_key = os.getenv('OPENAI_API_KEY')
-api_key = "MORALIS_API_KEY"
-current_date_string = str(datetime.now().isoformat())
-load_dotenv()  # Load environment variables from .env file
+api_key = os.getenv('MORALIS_API_KEY')
+current_date_string = datetime.now().strftime('%d-%m-%Y')
 
-login_manager = LoginManager()
-login_manager.init_app(app)
-login_manager.login_view = 'login'
-
-class User(UserMixin, db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(20), unique=True, nullable=False)
-    email = db.Column(db.String(120), unique=True, nullable=False)
-    password = db.Column(db.String(60), nullable=False)
-
-    def __init__(self, username, email, password):
-        self.username = username
-        self.email = email
-        self.password = bcrypt.generate_password_hash(password).decode('utf-8')
+# @app.route('/get_positions_and_summarize_pdf')
 
 
-@login_manager.user_loader
-def load_user(user_id):
-    return User.query.get(int(user_id))
+@app.route('/summarize_pdf', methods=['POST']) # Handles a API response from by all accounts GET positions
+def generate_summary():
+    try:
+        # Assuming the data is being sent as a JSON object in the body of a POST request
+        response_data = request.get_json()
+        user_id = "user123" # will need to track the request to a user therefore, we will get a user_id variable somehow.
+        objects_by_type = organize_data(response_data)
+        # print(f"Object: {objects_by_type}")
+        # { 'secType' - i.e MF, Stock, etc... { 'assetName' -- ie Tesla, AT&T, MutualFund xyz etc... { 'AssetAttributes': 'value' }}}
+        # Anthony, once you are able to find the structure for different asset type respones, assign variables to the important data points.
 
-
-@app.route('/')
-def index():
-    if current_user.is_authenticated:
-        return render_template('home/index.html')
-    else:
-        return redirect(url_for('login'))
-
-@app.route('/login', methods=['GET', 'POST'])
-def login():
-    form = LoginForm()
-    if form.validate_on_submit():  # Validation only once per submission
-        print("Form submitted and validated.")
-        user = User.query.filter_by(email=form.email.data).first()
-
-        if user:
-            print(f"Fetched user: {user.email}, {user.password}")
-
-            # Additional debugging: Print out details
-            print(f"Stored Hash: {user.password}")
-            print(f"Submitted password: {form.password.data}")
-
-            # Check the password
-            if bcrypt.check_password_hash(user.password, form.password.data):
-                print("Password matched.")
-                login_user(user, remember=form.remember_me.data)
-                return redirect(url_for('index'))
-            else:
-                print("Password did not match.")
-                print(f"User password: {user.password}")
-                print(f"Form password data: {form.password.data}")
-                print(f"Form password: {check_password_hash(user.password, form.password.data)}")
-                flash('Login Unsuccessful. Please check username and password', 'danger')
-        else:
-            print("User not found.")
-            flash('Login Unsuccessful. Please check username and password', 'danger')
-
-    return render_template('home/login.html', title='Login', form=form)
-
-
-@app.route('/show_users', methods=['GET'])
-def show_users():
-    users = User.query.all()
-    user_data = []
-    for user in users:
-        user_data.append({'username': user.username, 'email': user.email})
-    return jsonify(user_data)
-
-@app.route('/protected')
-@login_required
-def protected():
-    return redirect(url_for('index'))
-
-@app.route('/logout')
-@login_required
-def logout():
-    logout_user()
-    return redirect(url_for('login'))
-
-
-@app.route("/register", methods=['GET', 'POST'])
-def register():
-    form = RegistrationForm()
-    if form.validate_on_submit():
-        existing_user = User.query.filter_by(email=form.email.data).first()
-        if existing_user:
-            # Flash a message to tell the user that email already exists
-            flash('Email already exists. Please login or use a different email.', 'danger')
-        else:
-            # hashed_password = bcrypt.generate_password_hash(form.password.data)
-            user = User(username=form.username.data, email=form.email.data, password=form.password.data)
-            db.session.add(user)
-            db.session.commit()
-            login_user(user, remember=True)
-            return redirect(url_for('protected'))
-    return render_template('home/register.html', title='Register', form=form)
-
-
-@app.route('/get-portfolio-explanation', methods=['POST'])
-class PDF(FPDF):
-    def header(self):
-        # You can set a custom header here if needed
-        pass
-
-    def footer(self):
-        # Page number at the bottom
-        self.set_y(-15)
-        self.set_font('Arial', 'I', 8)
-        self.cell(0, 10, 'Page ' + str(self.page_no()), 0, 0, 'C')
-# Run the token suggestion
-def get_portflolio_explanation():
-    # ByAllAccounts pdf generator
-    
-    def string_to_pdf(text, output_filename="output.pdf"):
-        pdf = PDF()
-        pdf.add_page()
-        pdf.set_font("Arial", size=12)
-        pdf.multi_cell(0, 10, text)
-        pdf.output(output_filename)
-
-
-@app.route('/get-portfolio-generation', methods=['POST'])
-def get_portfolio_suggestion():
-    data = request.json
-    age = data['age']
-    income = data['income']
-    risk_score = data['risk_score']
-    # some stocks or funds to choose from?
-    # find an inudustry standard way of understanding risk. 
-
-    # OpenAI interaction
-    system_message = {
-        "role": "system",
-        "content": "You are a financial expert who provides insightful analyses and opinions to create crypto portfolios."
-    }
+        def sort_data_by_asset_class(objects_by_type):
+            sorted_data = {}
+            for asset_class, data in objects_by_type.items():
+                if asset_class == 'Mutualfund':
+                    sorted_data[asset_class] = get_mutual_fund_data(data)
+                elif asset_class == 'Stock':
+                    sorted_data[asset_class] = get_stock_data(data)
+                else:
+                    # For other asset classes, keep data as is, or implement additional sorting functions
+                    sorted_data[asset_class] = data
+            return sorted_data
         
-    user_message = {
-        "role": "user",
-        "content": f"""
-        Build a crypto portfolio for a client with the following qualities, with this real time price data. 
-        Client information:
-        - Age: {age}
-        - Income: {income}
-        - Risk Score: {risk_score}
+        # valuable_stock_data = get_stock_data(objects_by_type['Stock']) # This is the object for all of the stocks, no use here just to test
+        # pprint.pprint(f"VALUABLE STOCK: {valuable_stock_data}")
+        # Now you have the relevant data and can proceed with whatever processing you need
+        result_data = sort_data_by_asset_class(objects_by_type)
+        pprint.pprint(f"LOOK HERE: {result_data}")
 
-        Real time price data:
+        openai_prompt = f"""
+            I am going to give you a list of my investments, I want you to summarize the content of each of my investments
+            I will give you each investment by type, attributes and market value.
 
-        Considering these factors and other market dynamics, 
-        carefully incorporate the 
-    """
-    }
+            Holdings data:
+            {result_data}
 
-    openai_response = openai.ChatCompletion.create(
-        model="gpt-3.5-turbo",
-        messages=[system_message, user_message]
-    )
+            From this information, summarize what each of my investments are as if I did not have a deep understanding of financial markets. 
+            Give a 3-5 sentence clear and concise summary about each investment.
+            """
+        system_message = {
+            "role": "system",
+            "content": "You are a financial writer that summarizes client portfolio's"
+        }
+        
+        user_message = {
+            "role": "user",
+            "content": openai_prompt
+        }
 
-    ai_response = openai_response.choices[0].message['content']
-    return jsonify({"portfolio": ai_response})
+        openai_response = openai.ChatCompletion.create(
+            model="gpt-3.5-turbo",
+            messages=[system_message, user_message]
+        )
+
+        ai_response = openai_response.choices[0].message['content']
+        print(ai_response)
+        
+        created_pdf = create_pdf(ai_response, user_id) # Have a userID as the name of the pdf, so that we can find it in the pdf directory.
+        
+        return jsonify({"status": ai_response, "pdf": created_pdf})
+    
+    except Exception as e:
+        return jsonify({"error": f"Error: {str(e)}"})
+
+
+@app.route('/portfolio_create', methods=['POST']) # Generates Portfolio from desired attributes and 
+def generate_portfolio():
+    try:
+        data = request.json
+        print("Received Data from Client:", data)
+        age = data['age'] # these are easily adjustable
+        income = data['income']
+        risk_score = data['risk_score']
+        crypto_age = data['timeInCrypto']
+        agression = data['aggression'] 
+
+
+        def fetch_historical_price(token_list, dates_list):
+            historicalPrice = {}
+
+            print("Tokens for selected chain:", token_list)
+
+            for token, id in token_list.items():
+                for date in dates_list:
+                    url = f"https://api.coingecko.com/api/v3/coins/{id}/history?date={date}&localization=false"
+                    response = requests.get(url)
+                    if response.status_code == 200:
+                        data = response.json()
+                        try:
+                            data_point = {
+                                'price_usd': round(float(data['market_data']['current_price']['usd']), 4),
+                                'market_cap_usd': round(float(data['market_data']['market_cap']['usd']), 4),
+                                'total_volume_usd': round(float(data['market_data']['total_volume']['usd']), 4),
+                                'date': date  # Added to distinguish data points by date
+                            }
+                            # Create a list for the token if it doesn't exist in historicalPrice
+                            if token not in historicalPrice:
+                                historicalPrice[token] = []
+                            historicalPrice[token].append(data_point)
+                        except Exception as e:
+                            print(f"Error getting data for {token} on {date}: {e}")
+                    else:
+                        print(f"Error fetching data for {token} on {date}: {response.status_code}")
+
+            return historicalPrice
+        
+        historical_data = fetch_historical_price(token_list, dates_list)
+        historicalPrice_str = json.dumps(historical_data, indent=2)
+        formatted_output = f"Data: {historicalPrice_str}"
+        print(f"FORMATTED DATA: {formatted_output}")
+
+
+        json_example = {
+                "token1": "30%",
+                "token2": "15%",
+                "token3": "10%",
+                "etc...": "x%"
+            }
+
+        openai_prompt = f"""
+            Construct a customized crypto portfolio tailored to the specific needs of a financial advisor. The portfolio should be based on both the advisor's personal attributes and the current market data provided below.
+            **Advisor Attributes:**
+            - Age: {age},
+            - Income: {income},
+            - Risk Score (1 is low-risk, 10 is high-risk): {risk_score},
+            - Time in Crypto (years): {crypto_age},
+            - Investment Aggression (1 is low-risk, 10 is high-risk): {agression}
+
+            **Real-time USD Price, Market Cap, and Total Volume Data:**
+            {formatted_output}
+
+            Return your answer in three sections:
+            1. Begin with a generalized disclosure statement such as, "1. Please note that cryptocurrency investments are subject to various risks..."
+            2. Next, provide a reasoned portfolio, starting with "2. Considering the advisor's attributes and real-time market data, the portfolio is as follows..."
+            3. Conclude by offering a JSON-formatted breakdown of the portfolio. Start this section with "3. Based on the above recommendations, the portfolio breakdown is..." and provide the JSON object. 
+            Here is an example of the JSON formating to use:
+            {json_example}
+            """
+        # OpenAI interaction
+        system_message = {
+            "role": "system",
+            "content": "You are a cryptocurrency expert who provides insightful analyses and opinions to create crypto portfolios."
+        }
+        
+        user_message = {
+            "role": "user",
+            "content": openai_prompt
+        }
+
+        openai_response = openai.ChatCompletion.create(
+            model="gpt-3.5-turbo",
+            messages=[system_message, user_message]
+        )
+
+        ai_response = openai_response.choices[0].message['content']
+        print(f"ORIGINAL OPENAI: {ai_response}")
+        reason_data = extract_reason(ai_response)
+        print(f"REASONING: {reason_data}")
+        json_data = extract_json(ai_response)
+        if "error" in json_data:
+            return jsonify({"error": json_data["error"]})
+        print(f"JSON OBJECT: {json_data}")
+        return jsonify({"portfolio": json_data, "reason": reason_data})
+    except Exception as e:
+        return jsonify({"error": f"Error: {str(e)}"})
+    
+
 
 if __name__ == '__main__':
-    with app.app_context():
-        db.create_all()
-    app.run(debug=True)
+    app.run(debug=True, port=5000)  # Choose a port that doesn't conflict with regular Steward App
