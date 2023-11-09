@@ -13,7 +13,7 @@ This application is designed to provide two main features for financial advisors
 ## Technologies
 - Python with Flask for backend services.
 - OpenAI API for AI-driven insights and summaries.
-- Moralis API for real-time cryptocurrency data.
+- CoinGecko API for real-time cryptocurrency data.
 - React (suggested) for front-end implementation.
 
 ## Installation
@@ -35,7 +35,6 @@ This application is designed to provide two main features for financial advisors
 
 ## Environment Variables
 - `OPENAI_API_KEY`: API key for OpenAI.
-- `MORALIS_API_KEY`: API key for Moralis service.
 
 ## Contributing
 Contributions are welcome. Please open an issue first to discuss what you would like to change or add.
