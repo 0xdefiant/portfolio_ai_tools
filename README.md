@@ -1,4 +1,5 @@
 # AI Portfolio Generator and Financial Summary Tool
+** In the process of merging project from different repo **
 
 ## Description
 This application is designed to provide two main features for financial advisors and clients:
