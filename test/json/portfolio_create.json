@@ -1,0 +1,44 @@
+{
+    "data": [
+        {
+            "id": 1,
+            "details": {
+                "age": 25,
+                "income": 60000,
+                "risk_score": 9,
+                "timeInCrypto": 2,
+                "aggression": 8
+            }
+        },
+        {
+            "id": 2,
+            "details": {
+                "age": 45,
+                "income": 80000,
+                "risk_score": 4,
+                "timeInCrypto": 3,
+                "aggression": 3
+            }
+        },
+        {
+            "id": 3,
+            "details": {
+                "age": 60,
+                "income": 150000,
+                "risk_score": 5,
+                "timeInCrypto": 1,
+                "aggression": 2
+            }
+        },
+        {
+            "id": 4,
+            "details": {
+                "age": 38,
+                "income": 90000,
+                "risk_score": 6,
+                "timeInCrypto": 3,
+                "aggression": 5
+            }
+        }
+    ]
+}
